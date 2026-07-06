@@ -31,7 +31,7 @@ const PAGE_TITLES = {
 };
 
 const App = () => {
-  const [session, setSession] = React.useState(() => getSavedSession());
+  const [session, setSession] = React.useState(null);
   const [view, setView] = React.useState('dashboard');
   const [users, setUsers] = React.useState([]);
   const [log, setLog] = React.useState([]);
@@ -91,7 +91,7 @@ const App = () => {
     }
   }, [t.accent, t.density, t.sidebarStyle]);
 
-  const logout = () => { clearSession(); setSession(null); setView('dashboard'); };
+  const logout = () => { setSession(null); setView('dashboard'); };
 
   if (!session) {
     return (

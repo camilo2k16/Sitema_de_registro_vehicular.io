@@ -2,7 +2,6 @@
 
 const LOGIN_USER = 'liliana';
 const LOGIN_PASS = 'UFPSeduacion';
-const SESSION_KEY = 'sipav.session.v1';
 
 const LoginView = ({ onLogin, systemName }) => {
   const [user, setUser] = React.useState('');
@@ -15,7 +14,6 @@ const LoginView = ({ onLogin, systemName }) => {
     e.preventDefault();
     const u = user.trim().toLowerCase();
     if (u === LOGIN_USER && pass === LOGIN_PASS) {
-      try { localStorage.setItem(SESSION_KEY, JSON.stringify({ user: 'liliana', name: 'Liliana', ts: Date.now() })); } catch (err) {}
       setError('');
       onLogin({ user: 'liliana', name: 'Liliana' });
     } else {
@@ -88,15 +86,6 @@ const LoginView = ({ onLogin, systemName }) => {
   );
 };
 
-/* Sesión persistida: devuelve la sesión guardada o null */
-function getSavedSession() {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) { return null; }
-}
-function clearSession() {
-  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
-}
-
-Object.assign(window, { LoginView, getSavedSession, clearSession });
+/* La sesión vive solo en memoria: cada vez que se recarga la página
+   o se cierra el navegador, el sistema vuelve a pedir usuario y contraseña. */
+Object.assign(window, { LoginView });
