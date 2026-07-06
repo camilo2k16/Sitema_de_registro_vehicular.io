@@ -32,12 +32,6 @@ const MonitoreoView = ({ users, log, actions, gateOpen, setGateOpen }) => {
   };
   const manualClose = () => { clearTimeout(closeTimer.current); setGateOpen(false); };
 
-  const simulate = () => {
-    actions.simulateScan().then((r) => {
-      if (!r) toast({ tone: 'bad', title: 'Sin usuarios activos', sub: 'Registra al menos un usuario activo' });
-    });
-  };
-
   const recent = log.slice(0, 5);
 
   return (
@@ -48,9 +42,9 @@ const MonitoreoView = ({ users, log, actions, gateOpen, setGateOpen }) => {
           <div className="page-sub">Estado en tiempo real de la entrada {window.ENTRY_GATE || 'La Casona'} · lector RFID</div>
         </div>
         <div className="actions">
-          <button className="btn" onClick={simulate}>
-            <Icon name="rfid" size={14} /> Simular lectura
-          </button>
+          <Badge tone={DB.mode === 'firebase' ? 'ok' : 'warn'}>
+            {DB.mode === 'firebase' ? 'Conectado a la nube' : 'Sin conexión a la nube'}
+          </Badge>
         </div>
       </div>
 
@@ -138,7 +132,7 @@ const MonitoreoView = ({ users, log, actions, gateOpen, setGateOpen }) => {
             </div>
             {recent.length === 0 ? (
               <div className="empty" style={{padding: '24px 0'}}>
-                Sin lecturas todavía · usa “Simular lectura” o acerca una tarjeta al lector
+                Sin lecturas todavía · acerca una tarjeta al lector RFID
               </div>
             ) : (
               recent.map((s) => (

@@ -15,13 +15,8 @@
    ════════════════════════════════════════════════════════════════════ */
 
 window.FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  databaseURL: "",          // ← EL MÁS IMPORTANTE. Ej: https://tu-proyecto-default-rtdb.firebaseio.com
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  databaseURL: "https://sipav-ufps-default-rtdb.firebaseio.com",
+  projectId: "sipav-ufps"
 };
 
 /* Punto de entrada del campus (se guarda en cada registro de acceso) */

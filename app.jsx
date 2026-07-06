@@ -31,6 +31,7 @@ const PAGE_TITLES = {
 };
 
 const App = () => {
+  const [session, setSession] = React.useState(() => getSavedSession());
   const [view, setView] = React.useState('dashboard');
   const [users, setUsers] = React.useState([]);
   const [log, setLog] = React.useState([]);
@@ -40,7 +41,7 @@ const App = () => {
 
   // Conectar a la capa de datos (Firebase o local)
   React.useEffect(() => {
-    DB.init({ seedUsers: INITIAL_USERS, seedLogs: INITIAL_LOG });
+    DB.init();
     const offU = DB.onUsers(setUsers);
     const offL = DB.onLogs(setLog);
     return () => { offU && offU(); offL && offL(); };
@@ -53,7 +54,6 @@ const App = () => {
     setBlocked: (id, blocked) => DB.setBlocked(id, blocked),
     addLog: (entry) => DB.addLog(entry),
     captureScan: () => DB.captureScan(),
-    simulateScan: () => DB.simulateScan(),
   }), []);
 
   const stats = React.useMemo(() => {
@@ -91,12 +91,22 @@ const App = () => {
     }
   }, [t.accent, t.density, t.sidebarStyle]);
 
+  const logout = () => { clearSession(); setSession(null); setView('dashboard'); };
+
+  if (!session) {
+    return (
+      <ToastProvider>
+        <LoginView onLogin={(s) => setSession(s)} systemName={t.systemName} />
+      </ToastProvider>
+    );
+  }
+
   return (
     <ToastProvider>
       <div className={`app density-${t.density}`}>
         <Sidebar view={view} onNavigate={(v) => { setView(v); if (v !== 'registro') setEditingUser(null); }} systemName={t.systemName} />
         <main className="main">
-          <Topbar title={PAGE_TITLES[view]} crumbs={['SIPAV-UFPS', PAGE_TITLES[view]]} systemName={t.systemName} showLiveTicker={t.showLiveTicker} />
+          <Topbar title={PAGE_TITLES[view]} crumbs={['SIPAV-UFPS', PAGE_TITLES[view]]} systemName={t.systemName} showLiveTicker={t.showLiveTicker} session={session} onLogout={logout} />
           <div className="content">
             {view === 'dashboard' && <DashboardView users={users} log={log} stats={stats} onNavigate={setView} dbMode={DB.mode} />}
             {view === 'registro' && <RegistroView users={users} actions={actions} editingUser={editingUser} setEditingUser={setEditingUser} />}
@@ -183,7 +193,7 @@ const Sidebar = ({ view, onNavigate, systemName }) => (
   </aside>
 );
 
-const Topbar = ({ title, crumbs, systemName, showLiveTicker }) => {
+const Topbar = ({ title, crumbs, systemName, showLiveTicker, session, onLogout }) => {
   const now = useClock();
   return (
     <header className="topbar">
@@ -208,18 +218,13 @@ const Topbar = ({ title, crumbs, systemName, showLiveTicker }) => {
         <input placeholder="Buscar usuario, placa o UID…" />
       </div>
 
-      <button className="topbar-icon-btn" title="Notificaciones">
-        <Icon name="bell" size={16} />
-        <span className="dot"></span>
-      </button>
-
       <div className="topbar-user">
-        <span className="avatar">LM</span>
+        <span className="avatar">{(session && session.name ? session.name : 'L').slice(0, 1).toUpperCase()}</span>
         <div className="user-meta">
-          <span className="user-name">Liliana</span>
+          <span className="user-name">{session && session.name ? session.name : 'Liliana'}</span>
           <span className="user-role">Administradora · {systemName}</span>
         </div>
-        <button className="logout-btn">
+        <button className="logout-btn" onClick={onLogout}>
           <Icon name="logout" size={14} /> Salir
         </button>
       </div>

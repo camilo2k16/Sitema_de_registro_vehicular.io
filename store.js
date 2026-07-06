@@ -40,10 +40,6 @@
   function uidKey(uid) {
     return String(uid || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   }
-  function genUid() {
-    function h() { return Math.floor(Math.random() * 256).toString(16).toUpperCase().padStart(2, '0'); }
-    return h() + ' ' + h() + ' ' + h() + ' ' + h();
-  }
   function normalizeUser(u) {
     var key = uidKey(u.uid);
     return Object.assign({}, u, {
@@ -129,13 +125,7 @@
 
     if (state.mode === 'local') {
       console.log('%c[SIPAV] Modo LOCAL (navegador). Configura firebase-config.js para usar la nube + hardware.', 'color:#b25e00');
-      var had = lsLoad();
-      if (!had) {
-        // Sembrar datos de ejemplo la primera vez
-        state.users = (opts.seedUsers || []).map(normalizeUser);
-        state.logs = (opts.seedLogs || []).map(function (x) { return normalizeLog(x); });
-        lsSaveUsers(); lsSaveLogs();
-      }
+      lsLoad();
       emitUsers(); emitLogs();
     }
   }
@@ -201,10 +191,9 @@
   }
 
   // ════════════════════════════════════════════════════════════
-  //  RFID — registrar tarjeta / simular lectura
+  //  RFID — registrar tarjeta (lectura REAL del hardware)
   // ════════════════════════════════════════════════════════════
   // Espera a que el hardware escriba en /enroll un UID nuevo y lo devuelve.
-  // En modo local, simula una lectura con un UID aleatorio.
   function captureScan() {
     if (state.mode === 'firebase') {
       return new Promise(function (resolve, reject) {
@@ -220,20 +209,8 @@
         timer = setTimeout(function () { ref.off('value', handler); reject(new Error('timeout')); }, 30000);
       });
     }
-    return new Promise(function (resolve) { setTimeout(function () { resolve(genUid()); }, 1200); });
-  }
-
-  // Simula que alguien pasó la tarjeta por el lector (para demo sin hardware).
-  function simulateScan() {
-    var activos = state.users.filter(function (u) { return !u.blocked && u.status === 'Activo'; });
-    if (!activos.length) return Promise.resolve(null);
-    var u = activos[Math.floor(Math.random() * activos.length)];
-    var allowed = Math.random() > 0.05;
-    return addLog({
-      uid: u.uid, code: u.code, name: u.name, role: u.role, plate: u.plate,
-      vehicleType: u.vehicleType, status: allowed ? 'Permitido' : 'Denegado',
-      reason: allowed ? null : 'RFID inválido', gate: window.ENTRY_GATE,
-    }).then(function () { return { user: u, allowed: allowed }; });
+    // Sin Firebase no hay lector conectado: no se puede capturar.
+    return Promise.reject(new Error('sin-conexion'));
   }
 
   function findByUid(uid) {
@@ -252,7 +229,6 @@
     setBlocked: setBlocked,
     addLog: addLog,
     captureScan: captureScan,
-    simulateScan: simulateScan,
     findByUid: findByUid,
     uidKey: uidKey,
   };

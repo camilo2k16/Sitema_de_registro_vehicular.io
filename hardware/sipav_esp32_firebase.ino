@@ -40,7 +40,7 @@ const char* WIFI_PASSWORD = "TU_CLAVE_WIFI";
 // URL de tu Realtime Database SIN barra final.
 // La ves en la consola de Firebase → Realtime Database (arriba).
 // Ej: https://sipav-ufps-default-rtdb.firebaseio.com
-const char* DB_URL        = "https://TU-PROYECTO-default-rtdb.firebaseio.com";
+const char* DB_URL        = "https://sipav-ufps-default-rtdb.firebaseio.com";
 
 // Pines de la barrera / señalización
 #define RELAY_PIN  26   // relé que activa el motor / electroimán de la barrera

@@ -307,7 +307,20 @@ const MiniStat = ({ label, value, tone }) => {
 
 /* ───── Estadísticas ───── */
 const EstadisticasView = ({ log, users }) => {
-  const hourlyMax = Math.max(...HOURLY);
+  const toast = useToast();
+
+  const downloadReport = () => {
+    const fecha = new Date().toISOString().slice(0, 10);
+    if (exportReportCSV(log, `reporte-estadisticas-${fecha}.csv`)) {
+      toast({ tone: 'ok', title: 'Reporte descargado', sub: `${log.length} registros · reporte-estadisticas-${fecha}.csv` });
+    } else {
+      toast({ tone: 'bad', title: 'Sin datos para exportar', sub: 'El historial de accesos está vacío todavía' });
+    }
+  };
+
+  /* Picos por hora calculados del historial REAL */
+  const hourly = hourlyFromLog(log, false);
+  const hourlyMax = Math.max(1, ...hourly);
 
   /* Real 7-day series derived from log */
   const now = new Date();
@@ -326,7 +339,10 @@ const EstadisticasView = ({ log, users }) => {
   const facCounts = {};
   users.forEach((u) => { facCounts[u.faculty] = (facCounts[u.faculty] || 0) + 1; });
   const facList = Object.entries(facCounts).sort((a, b) => b[1] - a[1]);
-  const facMax = Math.max(...facList.map((f) => f[1]));
+  const facMax = Math.max(1, ...facList.map((f) => f[1]));
+
+  /* Anomalías REALES: últimos accesos denegados del historial */
+  const anomalies = log.filter((r) => r.status === 'Denegado').slice(0, 5);
 
   return (
     <div>
@@ -344,14 +360,14 @@ const EstadisticasView = ({ log, users }) => {
               <option value="90d">Últimos 90 días</option>
             </select>
           </div>
-          <button className="btn"><Icon name="download" size={14} /> Descargar reporte</button>
+          <button className="btn" onClick={downloadReport}><Icon name="download" size={14} /> Descargar reporte</button>
         </div>
       </div>
 
       <div className="stat-grid" style={{gridTemplateColumns:'repeat(4, 1fr)', marginBottom: 18}}>
-        <Stat tone="brand" label="Ingresos totales" value={weekTotal.toLocaleString('es-CO')} icon="login" foot="Últimos 7 días" deltaPct="+8.2%" deltaDir="up" />
-        <Stat tone="info" label="Promedio diario" value={promedio} icon="chart" foot="ingresos/día" deltaPct="+12" deltaDir="up" />
-        <Stat tone="ok" label="Tasa de aceptación" value={`${tasa}%`} icon="shield" foot="permisos sobre total" deltaPct="+0.3%" deltaDir="up" />
+        <Stat tone="brand" label="Ingresos totales" value={weekTotal.toLocaleString('es-CO')} icon="login" foot="Últimos 7 días" />
+        <Stat tone="info" label="Promedio diario" value={promedio} icon="chart" foot="ingresos/día" />
+        <Stat tone="ok" label="Tasa de aceptación" value={`${tasa}%`} icon="shield" foot="permisos sobre total" />
         <Stat tone="warn" label="Usuarios activos" value={users.filter((u) => !u.blocked).length} icon="users" foot={`de ${users.length} totales`} />
       </div>
 
@@ -393,12 +409,12 @@ const EstadisticasView = ({ log, users }) => {
 
         <div className="card">
           <div className="card-head">
-            <h3>Picos por hora · promedio</h3>
-            <div className="card-sub">Lectura sobre últimos 30 días</div>
+            <h3>Picos por hora · histórico</h3>
+            <div className="card-sub">Ingresos permitidos por hora del día</div>
           </div>
           <div className="card-body">
             <div className="bars bars-wrap">
-              {HOURLY.map((v, i) => {
+              {hourly.map((v, i) => {
                 const h = (v / hourlyMax) * 100;
                 return (
                   <div key={i} className="bar" style={{height: '100%'}}>
@@ -419,7 +435,9 @@ const EstadisticasView = ({ log, users }) => {
             <div className="card-sub">Comunidad registrada</div>
           </div>
           <div className="card-body" style={{display:'flex', flexDirection:'column', gap: 12}}>
-            {facList.map(([fac, n]) => (
+            {facList.length === 0 ? (
+              <div className="empty" style={{padding: '24px 0', textAlign: 'center'}}>Sin usuarios registrados todavía</div>
+            ) : facList.map(([fac, n]) => (
               <div key={fac}>
                 <div style={{display:'flex', justifyContent:'space-between', fontSize: 12.5, marginBottom: 4}}>
                   <span>{fac}</span>
@@ -435,15 +453,23 @@ const EstadisticasView = ({ log, users }) => {
 
         <div className="card">
           <div className="card-head">
-            <h3>Anomalías recientes</h3>
-            <Badge tone="warn">Requiere revisión</Badge>
+            <h3>Accesos denegados recientes</h3>
+            {anomalies.length > 0 && <Badge tone="warn">Requiere revisión</Badge>}
           </div>
           <div className="card-body" style={{display:'flex', flexDirection:'column', gap: 10}}>
-            <AnomalyRow time="08:42" title="3 intentos consecutivos denegados" sub={`Placa BVN485 · ${ENTRY_GATE}`} tone="bad" />
-            <AnomalyRow time="10:15" title="Tarjeta clonada detectada" sub="UID A1 B2 C3 D4 · doble lectura simultánea" tone="bad" />
-            <AnomalyRow time="13:08" title="Usuario no registrado intentó ingresar" sub={`UID 7F 32 18 9A · ${ENTRY_GATE}`} tone="warn" />
-            <AnomalyRow time="15:30" title="Acceso fuera de horario habitual" sub="Esteban Niño · 21:48 (cierre 22:00)" tone="warn" />
-            <AnomalyRow time="16:48" title="Lector RFID con latencia alta" sub="Controlador ESP32-RFID-01 · 184ms" tone="info" />
+            {anomalies.length === 0 ? (
+              <div className="empty" style={{padding: '24px 0', textAlign: 'center'}}>
+                Sin accesos denegados · aquí aparecerán los intentos rechazados por el lector
+              </div>
+            ) : anomalies.map((a) => (
+              <AnomalyRow
+                key={a.id}
+                time={formatTime(a.time).slice(0, 5)}
+                title={a.name !== 'Desconocido' ? `Acceso denegado · ${a.name}` : 'Tarjeta no registrada'}
+                sub={`${a.reason || 'No autorizado'} · UID ${a.uid || '—'} · ${a.gate}`}
+                tone="bad"
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -514,29 +540,10 @@ const ConfigView = ({ dbMode }) => (
       <div className="card">
         <div className="card-head"><h3>Hardware</h3></div>
         <div className="card-body" style={{display:'flex', flexDirection:'column', gap: 14}}>
-          <SettingRow label="Lector RFID conectado" value="1 / 1" tone="ok" />
-          <SettingRow label="Frecuencia de operación" value="13.56 MHz (ISO/IEC 14443A)" />
-          <SettingRow label="Controlador" value="ESP32-RFID-01" />
-          <SettingRow label="Servidor principal" value="srv-sipav.ufps.edu.co" />
-          <SettingRow label="Última sincronización" value="hace 12 segundos" />
-        </div>
-      </div>
-      <div className="card">
-        <div className="card-head"><h3>Notificaciones</h3></div>
-        <div className="card-body" style={{display:'flex', flexDirection:'column', gap: 14}}>
-          <SettingRow label="Alertas de acceso denegado" value="Email + SMS" />
-          <SettingRow label="Reporte diario automático" value="08:00 a.m." />
-          <SettingRow label="Alertas de intentos múltiples" value="Activado" tone="ok" />
-          <SettingRow label="Destinatarios" value="3 administradores" />
-        </div>
-      </div>
-      <div className="card">
-        <div className="card-head"><h3>Seguridad y privacidad</h3></div>
-        <div className="card-body" style={{display:'flex', flexDirection:'column', gap: 14}}>
-          <SettingRow label="Cifrado de tarjetas RFID" value="AES-128" tone="ok" />
-          <SettingRow label="Retención de logs" value="365 días" />
-          <SettingRow label="Política de datos" value="Ley 1581 de 2012" />
-          <SettingRow label="Autenticación 2FA" value="Habilitada" tone="ok" />
+          <SettingRow label="Lector RFID" value="RC522 (13.56 MHz · ISO/IEC 14443A)" />
+          <SettingRow label="Controlador" value="ESP32" />
+          <SettingRow label="Base de datos" value="Firebase Realtime Database" />
+          <SettingRow label="Canal de registro" value="/logs · /users · /enroll" />
         </div>
       </div>
     </div>

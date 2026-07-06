@@ -150,6 +150,28 @@ const useClock = () => {
 const formatTime = (d) => d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 const formatDate = (d) => d.toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
 
+/* Exporta el historial de accesos a un archivo CSV (abre en Excel).
+   Devuelve false si no hay datos. */
+function exportReportCSV(log, filename) {
+  if (!log || !log.length) return false;
+  const head = ['Fecha', 'Hora', 'Código', 'Nombre', 'Rol', 'Tipo', 'Placa', 'UID', 'Estado', 'Motivo', 'Entrada'];
+  const rows = log.map((r) => [
+    r.time.toLocaleDateString('es-CO'), formatTime(r.time), r.code, r.name, r.role,
+    r.vehicleType, r.plate, r.uid, r.status, r.reason || '', r.gate,
+  ]);
+  const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = '\uFEFF' + [head].concat(rows).map((r) => r.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename || 'reporte-accesos.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return true;
+}
+
 Object.assign(window, {
-  Icon, Stat, Badge, ToastProvider, useToast, useClock, formatTime, formatDate, vehicleIconName
+  Icon, Stat, Badge, ToastProvider, useToast, useClock, formatTime, formatDate, vehicleIconName, exportReportCSV
 });

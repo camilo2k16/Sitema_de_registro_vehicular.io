@@ -1,15 +1,36 @@
 /* Dashboard — Sistema de registro vehicular UFPS (La Casona) */
 
-const DashboardView = ({ users, log, stats, onNavigate }) => {
-  const hourlyMax = Math.max(...HOURLY);
+const DashboardView = ({ users, log, stats, onNavigate, dbMode }) => {
+  const toast = useToast();
 
-  /* Recompute today's distribution from log so it stays consistent */
+  const refresh = () => {
+    toast({
+      tone: 'ok',
+      title: 'Datos actualizados',
+      sub: dbMode === 'firebase' ? 'Sincronizado con la base de datos en la nube' : 'Datos locales recargados',
+    });
+  };
+
+  const exportReport = () => {
+    const fecha = new Date().toISOString().slice(0, 10);
+    if (exportReportCSV(log, `reporte-accesos-${fecha}.csv`)) {
+      toast({ tone: 'ok', title: 'Reporte exportado', sub: `${log.length} registros · reporte-accesos-${fecha}.csv` });
+    } else {
+      toast({ tone: 'bad', title: 'Sin datos para exportar', sub: 'El historial de accesos está vacío todavía' });
+    }
+  };
+
+  /* Flujo por hora calculado del historial REAL (hoy) */
+  const hourly = hourlyFromLog(log, true);
+  const hourlyMax = Math.max(1, ...hourly);
+
+  /* Distribución del día calculada del historial REAL */
   const today = log.filter((r) => r.time.toDateString() === new Date().toDateString());
-  const distLive = ['Carro', 'Moto', 'Peatón'].map((t, i) => ({
+  const distLive = ['Carro', 'Moto', 'Peatón'].map((t) => ({
     label: t === 'Peatón' ? 'Peatones' : (t + 's'),
     type: t,
-    value: today.filter((r) => r.vehicleType === t).length || VEH_DIST[i].value,
-    color: VEH_DIST[i].color,
+    value: today.filter((r) => r.vehicleType === t).length,
+    color: VEH_COLORS[t],
   }));
   const totalVehDist = distLive.reduce((a, b) => a + b.value, 0);
 
@@ -36,8 +57,8 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
           <div className="page-sub">Resumen operativo · entrada {ENTRY_GATE} · {formatDate(new Date())}</div>
         </div>
         <div className="actions">
-          <button className="btn"><Icon name="refresh" size={14} /> Actualizar</button>
-          <button className="btn"><Icon name="download" size={14} /> Exportar reporte</button>
+          <button className="btn" onClick={refresh}><Icon name="refresh" size={14} /> Actualizar</button>
+          <button className="btn" onClick={exportReport}><Icon name="download" size={14} /> Exportar reporte</button>
           <button className="btn btn-primary" onClick={() => onNavigate('registro')}>
             <Icon name="plus" size={14} stroke={2.4} /> Nuevo registro
           </button>
@@ -96,7 +117,7 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
           </div>
           <div className="card-body">
             <div className="bars bars-wrap">
-              {HOURLY.map((v, i) => {
+              {hourly.map((v, i) => {
                 const h = (v / hourlyMax) * 100;
                 return (
                   <div key={i} className="bar" style={{height: '100%'}}>
@@ -118,6 +139,12 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
           </div>
           <div className="card-body">
             <div className="donut-wrap">
+              {totalVehDist === 0 ? (
+                <div className="empty" style={{padding: '40px 10px', width: '100%', textAlign: 'center'}}>
+                  Sin ingresos hoy todavía · la gráfica se llena con las lecturas reales del lector
+                </div>
+              ) : (
+              <React.Fragment>
               <div className="donut" style={{
                 background: `conic-gradient(
                   ${distLive[0].color} 0% ${(distLive[0].value/totalVehDist)*100}%,
@@ -146,6 +173,8 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
                   <b style={{color:'var(--text)', float:'right', fontFamily:'var(--font-mono)'}}>{weekTotal}</b>
                 </div>
               </div>
+              </React.Fragment>
+              )}
             </div>
           </div>
         </div>
@@ -163,6 +192,11 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
             </button>
           </div>
           <div className="table-wrap">
+            {recentLog.length === 0 ? (
+              <div className="empty" style={{padding: '36px 16px', textAlign: 'center'}}>
+                Aún no hay ingresos registrados · aparecerán aquí cuando el lector RFID registre la primera tarjeta
+              </div>
+            ) : (
             <table className="tbl">
               <thead>
                 <tr>
@@ -195,6 +229,7 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
 
@@ -233,9 +268,9 @@ const DashboardView = ({ users, log, stats, onNavigate }) => {
             <div style={{marginTop: 14, padding: 12, background:'var(--surface-2)', borderRadius: 8, fontSize: 12.5, color:'var(--text-muted)', display:'flex', gap: 10, alignItems:'center'}}>
               <Icon name="clock" size={16} />
               <span>Última actualización <b style={{color:'var(--text)', fontFamily:'var(--font-mono)'}}>{formatTime(new Date())}</b></span>
-              <span style={{marginLeft:'auto', display:'inline-flex', alignItems:'center', gap:5, color:'var(--ok)'}}>
-                <span style={{width:7, height:7, borderRadius:'50%', background:'var(--ok)'}}></span>
-                Sincronizado
+              <span style={{marginLeft:'auto', display:'inline-flex', alignItems:'center', gap:5, color: dbMode === 'firebase' ? 'var(--ok)' : 'var(--warn)'}}>
+                <span style={{width:7, height:7, borderRadius:'50%', background: dbMode === 'firebase' ? 'var(--ok)' : 'var(--warn)'}}></span>
+                {dbMode === 'firebase' ? 'Sincronizado con la nube' : 'Modo local'}
               </span>
             </div>
           </div>
