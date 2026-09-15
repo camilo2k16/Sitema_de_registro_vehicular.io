@@ -90,7 +90,6 @@ const UsuariosView = ({ users, actions, onEditUser, onNavigate, log, blockedView
               <option>Todos</option>
               <option>Carro</option>
               <option>Moto</option>
-              <option>Peatón</option>
             </select>
           </div>
           <div className="spacer"></div>
