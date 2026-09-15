@@ -137,7 +137,7 @@ const RegistroView = ({ users, actions, editingUser, setEditingUser }) => {
               <div className="form-grid">
                 <Field label="Tipo de acceso" required full>
                   <div className="radio-row">
-                    {['Carro', 'Moto', 'Peatón'].map((t) => (
+                    {['Carro', 'Moto'].map((t) => (
                       <label key={t} className={`radio-pill ${form.vehicleType === t ? 'checked' : ''}`}>
                         <input type="radio" checked={form.vehicleType === t} onChange={() => set('vehicleType', t)} />
                         <Icon name={vehicleIconName(t)} size={14} />
