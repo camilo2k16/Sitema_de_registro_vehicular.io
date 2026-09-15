@@ -531,7 +531,7 @@ const ConfigView = ({ dbMode }) => (
         <div className="card-body" style={{display:'flex', flexDirection:'column', gap: 14}}>
           <SettingRow label="Punto de acceso" value={ENTRY_GATE} />
           <SettingRow label="Modo de registro" value="Solo entradas" />
-          <SettingRow label="Tipos permitidos" value="Carro · Moto · Peatón" />
+          <SettingRow label="Tipos permitidos" value="Carro · Moto" />
           <SettingRow label="Horario operativo" value="05:30 – 22:00" />
           <SettingRow label="Apertura automática barrera" value="Activada" tone="ok" />
         </div>
