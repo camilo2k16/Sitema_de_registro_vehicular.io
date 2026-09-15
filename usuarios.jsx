@@ -93,7 +93,14 @@ const UsuariosView = ({ users, actions, onEditUser, onNavigate, log, blockedView
             </select>
           </div>
           <div className="spacer"></div>
-          <button className="btn btn-ghost">
+          <button className="btn btn-ghost" onClick={() => {
+            const fecha = new Date().toISOString().slice(0, 10);
+            if (exportUsersCSV(list, `usuarios-${fecha}.csv`)) {
+              toast({ tone: 'ok', title: 'Usuarios exportados', sub: `${list.length} registros` });
+            } else {
+              toast({ tone: 'bad', title: 'Sin usuarios para exportar', sub: 'Ajusta los filtros' });
+            }
+          }}>
             <Icon name="download" size={13} /> Exportar
           </button>
         </div>
