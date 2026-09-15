@@ -70,6 +70,11 @@
     });
 
     console.log('[PUERTA]', permitido ? 'ACCESO PERMITIDO' : 'DENEGADO: ' + motivo);
+
+    window.dispatchEvent(new CustomEvent('sipav-scan', {
+      detail: { uid: key, name: u.name, permitido: permitido, motivo: motivo }
+    }));
+
     responder(db, key, n, permitido ? 1 : 0);
   }
 
