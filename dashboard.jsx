@@ -26,8 +26,8 @@ const DashboardView = ({ users, log, stats, onNavigate, dbMode }) => {
 
   /* Distribución del día calculada del historial REAL */
   const today = log.filter((r) => r.time.toDateString() === new Date().toDateString());
-  const distLive = ['Carro', 'Moto', 'Peatón'].map((t) => ({
-    label: t === 'Peatón' ? 'Peatones' : (t + 's'),
+  const distLive = ['Carro', 'Moto'].map((t) => ({
+    label: t + 's',
     type: t,
     value: today.filter((r) => r.vehicleType === t).length,
     color: VEH_COLORS[t],
