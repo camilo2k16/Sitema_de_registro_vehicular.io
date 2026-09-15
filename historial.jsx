@@ -35,8 +35,28 @@ const HistorialView = ({ log }) => {
   const todayCount = log.filter((r) => r.time.toDateString() === now.toDateString()).length;
   const weekCount = log.filter((r) => r.time >= startOfWeek).length;
 
-  const exportAs = (fmt) => toast({ tone: 'ok', title: `Exportando ${fmt}`, sub: `${filtered.length} registros` });
+  const exportExcel = () => {
+    const fecha = new Date().toISOString().slice(0, 10);
+    if (exportReportCSV(filtered, `historial-accesos-${fecha}.csv`)) {
+      toast({ tone: 'ok', title: 'Excel descargado', sub: `${filtered.length} registros` });
+    } else {
+      toast({ tone: 'bad', title: 'Sin datos', sub: 'No hay registros con esos filtros' });
+    }
+  };
 
+  const exportarPDF = () => {
+    const cols = ['Fecha', 'Hora', 'Código', 'Nombre', 'Rol', 'Tipo', 'Placa', 'Estado', 'Motivo'];
+    const rows = filtered.map((r) => [
+      r.time.toLocaleDateString('es-CO'), formatTime(r.time), r.code, r.name,
+      r.role, r.vehicleType, r.plate, r.status, r.reason || '',
+    ]);
+    if (exportPDF('Historial de accesos · ' + ENTRY_GATE, cols, rows)) {
+      toast({ tone: 'ok', title: 'PDF generado', sub: 'Usa "Guardar como PDF" en el diálogo' });
+    } else {
+      toast({ tone: 'bad', title: 'Sin datos', sub: 'No hay registros con esos filtros' });
+    }
+  };
+  
   return (
     <div>
       <div className="page-header">
@@ -45,8 +65,8 @@ const HistorialView = ({ log }) => {
           <div className="page-sub">{filtered.length} de {log.length} registros · entrada única: {ENTRY_GATE}</div>
         </div>
         <div className="actions">
-          <button className="btn" onClick={() => exportAs('PDF')}><Icon name="download" size={14} /> PDF</button>
-          <button className="btn" onClick={() => exportAs('Excel')}><Icon name="download" size={14} /> Excel</button>
+          <button className="btn" onClick={exportarPDF}><Icon name="download" size={14} /> PDF</button>
+          <button className="btn" onClick={exportExcel}><Icon name="download" size={14} /> Excel</button>
         </div>
       </div>
 
@@ -89,7 +109,7 @@ const HistorialView = ({ log }) => {
             </select>
           </div>
           <div className="spacer"></div>
-          <button className="btn btn-ghost" onClick={() => { setQ(''); setStatus('Todos'); setVehType('Todos'); setDayFilter('hoy'); }}>
+          <button className="btn btn-ghost" onClick={() => { setQ(''); setStatus('Todos'); setVehType('Todos'); setDayFilter('todos'); setPage(0); }}>
             <Icon name="x" size={12} /> Limpiar filtros
           </button>
         </div>
