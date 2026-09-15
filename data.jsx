@@ -15,7 +15,7 @@ const PROGRAMS = {
   'Salud': ['Enfermería'],
 };
 
-const VEH_TYPES = ['Carro', 'Moto', 'Peatón'];
+const VEH_TYPES = ['Carro', 'Moto'];
 const CAR_BRANDS = ['Chevrolet', 'Renault', 'Mazda', 'Kia', 'Hyundai', 'Toyota', 'Nissan'];
 const MOTO_BRANDS = ['Yamaha', 'AKT', 'Honda', 'Bajaj', 'Suzuki', 'Kawasaki'];
 const COLORS_LIST = ['Blanco', 'Negro', 'Gris', 'Rojo', 'Azul', 'Plata'];
@@ -23,7 +23,7 @@ const COLORS_LIST = ['Blanco', 'Negro', 'Gris', 'Rojo', 'Azul', 'Plata'];
 const ENTRY_GATE = window.ENTRY_GATE || 'La Casona';
 
 /* Colores para la distribución por tipo de vehículo (gráficas) */
-const VEH_COLORS = { 'Carro': '#e30613', 'Moto': '#1f5fae', 'Peatón': '#117a4a' };
+const VEH_COLORS = { 'Carro': '#e30613', 'Moto': '#1f5fae' };
 
 /* Calcula los ingresos por hora (0–23) a partir del historial REAL */
 function hourlyFromLog(log, onlyToday) {
