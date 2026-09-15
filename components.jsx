@@ -172,6 +172,53 @@ function exportReportCSV(log, filename) {
   return true;
 }
 
+/* Exporta la lista de usuarios a CSV */
+function exportUsersCSV(list, filename) {
+  if (!list || !list.length) return false;
+  const head = ['Código', 'Nombre', 'Email', 'Rol', 'Facultad', 'Programa',
+                'Tipo', 'Placa', 'Marca', 'Color', 'UID', 'Estado'];
+  const rows = list.map((u) => [
+    u.code, u.name, u.email, u.role, u.faculty, u.program,
+    u.vehicleType, u.plate, u.brand, u.color, u.uid,
+    u.blocked ? 'Bloqueado' : (u.status || 'Activo'),
+  ]);
+  const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const csv = '\uFEFF' + [head].concat(rows).map((r) => r.map(esc).join(';')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename || 'usuarios.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  return true;
+}
+
+/* Genera un PDF usando la ventana de impresión del navegador */
+function exportPDF(titulo, columnas, filas) {
+  if (!filas || !filas.length) return false;
+  const esc = (v) => String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>${esc(titulo)}</title><style>
+    body{font-family:system-ui,Arial,sans-serif;padding:24px;color:#111}
+    h1{font-size:18px;margin:0 0 4px} .sub{font-size:12px;color:#666;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;font-size:11px}
+    th{background:#e30613;color:#fff;padding:6px;text-align:left}
+    td{padding:5px 6px;border-bottom:1px solid #ddd}
+    tr:nth-child(even) td{background:#fafafa}
+    </style></head><body>
+    <h1>${esc(titulo)}</h1>
+    <div class="sub">SIPAV-UFPS · ${filas.length} registros · ${new Date().toLocaleString('es-CO')}</div>
+    <table><thead><tr>${columnas.map((c) => '<th>' + esc(c) + '</th>').join('')}</tr></thead>
+    <tbody>${filas.map((f) => '<tr>' + f.map((c) => '<td>' + esc(c) + '</td>').join('') + '</tr>').join('')}</tbody>
+    </table></body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
+  return true;
+}
+
 Object.assign(window, {
-  Icon, Stat, Badge, ToastProvider, useToast, useClock, formatTime, formatDate, vehicleIconName, exportReportCSV
+  Icon, Stat, Badge, ToastProvider, useToast, useClock, formatTime, formatDate,
+  vehicleIconName, exportReportCSV, exportUsersCSV, exportPDF
 });
