@@ -19,10 +19,23 @@ const MonitoreoView = ({ users, log, actions, gateOpen, setGateOpen }) => {
       if (newest.status === 'Permitido') {
         setGateOpen(true);
         clearTimeout(closeTimer.current);
-        closeTimer.current = setTimeout(() => setGateOpen(false), 3500);
+        closeTimer.current = setTimeout(() => setGateOpen(false), 10000);
       }
     }
   }, [log]);
+
+  /* Reaccion inmediata al lector, sin esperar el viaje del log */
+  React.useEffect(() => {
+    const onScan = (e) => {
+      if (!e.detail || !e.detail.permitido) return;
+      setGateOpen(true);
+      clearTimeout(closeTimer.current);
+      closeTimer.current = setTimeout(() => setGateOpen(false), 10000);
+    };
+    window.addEventListener('sipav-scan', onScan);
+    return () => window.removeEventListener('sipav-scan', onScan);
+  }, []);
+  
 
   const manualOpen = () => {
     setGateOpen(true);
