@@ -30,7 +30,11 @@ const RegistroView = ({ users, actions, editingUser, setEditingUser }) => {
     if (!form.program) e.program = 'Requerido';
     if (!isPed) {
       if (!form.plate) e.plate = 'Requerido';
-      else if (!/^[A-Z]{3}\d{3}$/.test(form.plate)) e.plate = 'Formato: AAA000';
+      else if (form.vehicleType === 'Moto') {
+        if (!/^[A-Z]{3}\d{2}[A-Z]$/.test(form.plate)) e.plate = 'Formato moto: AAA00A';
+      } else {
+        if (!/^[A-Z]{3}\d{3}$/.test(form.plate)) e.plate = 'Formato carro: AAA000';
+      }
       if (!form.brand) e.brand = 'Requerido';
       if (!form.color) e.color = 'Requerido';
     }
@@ -139,7 +143,7 @@ const RegistroView = ({ users, actions, editingUser, setEditingUser }) => {
                   <div className="radio-row">
                     {['Carro', 'Moto'].map((t) => (
                       <label key={t} className={`radio-pill ${form.vehicleType === t ? 'checked' : ''}`}>
-                        <input type="radio" checked={form.vehicleType === t} onChange={() => set('vehicleType', t)} />
+                        <input type="radio" checked={form.vehicleType === t} onChange={() => { set('vehicleType', t); set('plate', ''); }} />
                         <Icon name={vehicleIconName(t)} size={14} />
                         {t}
                       </label>
@@ -160,11 +164,12 @@ const RegistroView = ({ users, actions, editingUser, setEditingUser }) => {
                   </Field>
                 ) : (
                   <>
-                    <Field label="Placa" required err={errors.plate} hint="Formato AAA000 (sin espacios)">
+                    <Field label="Placa" required err={errors.plate}
+                           hint={form.vehicleType === 'Moto' ? 'Formato AAA00A (sin espacios)' : 'Formato AAA000 (sin espacios)'}>
                       <input
                         value={form.plate}
                         onChange={(e) => set('plate', e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
-                        placeholder="ABC123"
+                        placeholder={form.vehicleType === 'Moto' ? 'ABC12D' : 'ABC123'}
                         style={{fontFamily:'var(--font-mono)', letterSpacing: '0.1em', textTransform:'uppercase'}}
                       />
                     </Field>
