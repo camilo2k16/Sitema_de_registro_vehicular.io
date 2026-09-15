@@ -146,11 +146,17 @@ const DashboardView = ({ users, log, stats, onNavigate, dbMode }) => {
               ) : (
               <React.Fragment>
               <div className="donut" style={{
-                background: `conic-gradient(
-                  ${distLive[0].color} 0% ${(distLive[0].value/totalVehDist)*100}%,
-                  ${distLive[1].color} ${(distLive[0].value/totalVehDist)*100}% ${((distLive[0].value+distLive[1].value)/totalVehDist)*100}%,
-                  ${distLive[2].color} ${((distLive[0].value+distLive[1].value)/totalVehDist)*100}% 100%
-                )`
+                background: `conic-gradient(${
+                  (() => {
+                    let acc = 0;
+                    return distLive.map((d) => {
+                      const ini = (acc / totalVehDist) * 100;
+                      acc += d.value;
+                      const fin = (acc / totalVehDist) * 100;
+                      return `${d.color} ${ini}% ${fin}%`;
+                    }).join(', ');
+                  })()
+                })`
               }}>
                 <div className="center">
                   <b>{totalVehDist}</b>
