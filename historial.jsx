@@ -86,7 +86,6 @@ const HistorialView = ({ log }) => {
               <option>Todos</option>
               <option>Carro</option>
               <option>Moto</option>
-              <option>Peatón</option>
             </select>
           </div>
           <div className="spacer"></div>
